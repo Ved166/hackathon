@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import './index.css';
 import ModeSelection from './components/ModeSelection';
-import LoginPage from './components/LoginPage';
 import PersonalDashboard from './components/PersonalDashboard';
 import StartupDashboard from './components/StartupDashboard';
 
@@ -46,10 +45,10 @@ function App() {
     // show mode selection AFTER login
     // keep a flag to auto-redirect if user previously chose default mode
     const saved = window.localStorage.getItem('financeos-default-mode');
-    if (saved && loggedInUser) {
-      // if user already picked a default earlier, go there automatically
+    if (saved) {
       setMode(saved === 'startup' ? 'startup' : 'unified');
       setRoute(saved === 'startup' ? 'dashboard_startup' : 'dashboard_personal');
+      setShowModeSelection(false);
     }
   }, []);
 
@@ -59,9 +58,16 @@ function App() {
   const [startupInfo, setStartupInfo] = useState<any | null>(null);
 
   // login & role modal
-  const [showModeSelection, setShowModeSelection] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
-  const [showLogin, setShowLogin] = useState(true);
+  // show mode selection on first visit if user hasn't chosen a default mode yet
+  const [showModeSelection, setShowModeSelection] = useState<boolean>(() => {
+    try {
+      const saved = window.localStorage.getItem('financeos-default-mode');
+      return !saved;
+    } catch (err) {
+      return true;
+    }
+  });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -165,7 +171,6 @@ function App() {
     setShowModeSelection(false);
     window.localStorage.setItem('financeos-default-mode', role);
 
-    // Persist the chosen mode to the backend for this user
     try {
       await fetch(`${apiBase}/users/profile`, {
         method: 'POST',
@@ -176,33 +181,10 @@ function App() {
       console.error('Failed to save default mode to backend', err);
     }
 
-    // navigate to the selected dashboard
     setRoute(role === 'startup' ? 'dashboard_startup' : 'dashboard_personal');
   }
 
-  async function handleLogin(username: string) {
-    setLoggedInUser(username);
-    setShowLogin(false);
 
-    // Try to fetch saved mode from the backend; if present, go directly to that dashboard
-    try {
-      const res = await fetch(`${apiBase}/users/profile`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json?.defaultMode) {
-          const role = json.defaultMode === 'startup' ? 'startup' : 'personal';
-          setMode(role === 'startup' ? 'startup' : 'personal');
-          setRoute(role === 'startup' ? 'dashboard_startup' : 'dashboard_personal');
-          return;
-        }
-      }
-    } catch (err) {
-      console.error('Failed to read profile on login', err);
-    }
-
-    // otherwise, show mode selection
-    setShowModeSelection(true);
-  }
 
   return (
     <div className="finance-root">
@@ -344,7 +326,6 @@ function App() {
         </div>
 
         {showModeSelection && <ModeSelection onChoose={handleModeChoose} />}
-        {showLogin && <LoginPage onLogin={handleLogin} />}
 
         <section className="grid-main">
           {route === 'dashboard' && (
