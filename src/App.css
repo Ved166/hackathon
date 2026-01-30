@@ -487,24 +487,6 @@
   border: 1px solid rgba(148, 163, 184, 0.35);
 }
 
-.login-root {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(2,6,23,0.6);
-  z-index: 40;
-}
-
-.login-card {
-  background: var(--bg);
-  padding: 18px;
-  border-radius: 12px;
-  width: 420px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-}
-
 /* Mode selection page */
 .mode-select-root {
   position: fixed;
